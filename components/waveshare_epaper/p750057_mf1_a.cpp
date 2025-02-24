@@ -11,7 +11,7 @@ namespace esphome
 
     const char *const P750057MF1A::TAG = "p750057-mf1-a";
 
-    RTC_DATA_ATTR uint32_t P750057MF1A::at_update_ = 0;
+     uint32_t P750057MF1A::at_update_ = 0;
 
     int P750057MF1A::get_width_internal() { return WIDTH; }
 

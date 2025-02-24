@@ -44,7 +44,7 @@ namespace esphome
             0x00, 0x00, 0x00, 0x00, 0x00,             // TP6 A~D RP6
     };
 
-    RTC_DATA_ATTR uint32_t E0213A09::at_update_ = 0;
+     uint32_t E0213A09::at_update_ = 0;
 
     int E0213A09::get_width_internal() { return WIDTH; }
 
