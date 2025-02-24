@@ -65,7 +65,7 @@ namespace esphome
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-    RTC_DATA_ATTR uint32_t GDEW042M01::at_update_ = 0;
+    uint32_t GDEW042M01::at_update_ = 0;
  
     int GDEW042M01::get_width_internal() { return WIDTH; }
 
