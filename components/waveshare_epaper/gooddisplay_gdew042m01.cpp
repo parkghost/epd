@@ -65,15 +65,32 @@ namespace esphome
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-#ifdef USE_ESP32
-    uint32_t GDEW042M01::at_update_ = 0;
-#endif
-
     int GDEW042M01::get_width_internal() { return WIDTH; }
 
     int GDEW042M01::get_width_controller() { return WIDTH; }
 
     int GDEW042M01::get_height_internal() { return HEIGHT; }
+
+    bool GDEW042M01::wait_until_idle_()
+    {
+      if (this->busy_pin_ == nullptr || this->busy_pin_->digital_read())
+      {
+        return true;
+      }
+
+      const uint32_t start = millis();
+      while (!this->busy_pin_->digital_read())
+      {
+        if (millis() - start > this->idle_timeout_())
+        {
+          ESP_LOGE(TAG, "Timeout while displaying image!");
+          return false;
+        }
+        App.feed_wdt();
+        delay(1);
+      }
+      return true;
+    }
 
     uint32_t GDEW042M01::idle_timeout_()
     {
@@ -104,17 +121,18 @@ namespace esphome
 
       if (full_update)
       {
-        unsigned int i;
         // Write Data
         this->command(0x10); // Transfer old data
-        for (i = 0; i < this->get_buffer_length_(); i++)
+        for (uint32_t i = 0; i < this->get_buffer_length_(); i++)
         {
-          this->data(0xFF); // Transfer the actual displayed data
+          this->data(this->buffer_[i]); // Transfer the actual displayed data
+          this->oldData[i] = this->buffer_[i];
         }
 
         this->command(0x13); // Transfer new data
         this->start_data_();
-        this->write_array(this->buffer_, this->get_buffer_length_()); // Transfer the actual displayed data
+        for (uint32_t i = 0; i < this->get_buffer_length_(); i++)
+          this->write_byte(0x00);
         this->end_data_();
       }
       else
@@ -135,10 +153,17 @@ namespace esphome
         this->data((HEIGHT - 1) % 256);
         this->data(0x01);
 
+        this->command(0x10); // Transfer old data
+        this->start_data_();
+        this->write_array(this->oldData, this->get_buffer_length_()); // Transfer the actual displayed data
+        this->end_data_();
+
         this->command(0x13); // Transfer new data
         this->start_data_();
         this->write_array(this->buffer_, this->get_buffer_length_()); // Transfer the actual displayed data
         this->end_data_();
+        for (uint32_t i = 0; i < this->get_buffer_length_(); i++)
+          this->oldData[i] = this->buffer_[i];
 
         this->command(0x92);
       }
@@ -151,6 +176,11 @@ namespace esphome
         return;
       }
 
+      if (!full_update)
+      {
+        this->command(0x92);
+      }
+
       this->status_clear_warning();
 
       this->deep_sleep();
@@ -158,6 +188,12 @@ namespace esphome
 
     void GDEW042M01::init_display_()
     {
+      if (!initial_)
+      {
+        reset_();
+        initial_ = true;
+      }
+
       if (hibernating_)
         reset_();
 
@@ -183,8 +219,7 @@ namespace esphome
     {
       if (this->reset_pin_ != nullptr)
       {
-        int i;
-        for (i = 0; i < 3; i++)
+        for (uint32_t i = 0; i < 3; i++)
         {
           this->reset_pin_->digital_write(false);
           delay(10);
