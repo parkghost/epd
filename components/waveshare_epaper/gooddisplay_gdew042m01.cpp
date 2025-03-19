@@ -2,6 +2,9 @@
 #include <cstdint>
 #include "esphome/core/log.h"
 
+// This implementation is based on the GxEPD2 library
+// https://github.com/ZinggJM/GxEPD2/blob/master/src/epd/GxEPD2_420_M01.cpp
+
 namespace esphome
 {
   namespace waveshare_epaper
@@ -121,18 +124,18 @@ namespace esphome
 
       if (full_update)
       {
-        // Write Data
         this->command(0x10); // Transfer old data
         for (uint32_t i = 0; i < this->get_buffer_length_(); i++)
         {
-          this->data(this->buffer_[i]); // Transfer the actual displayed data
-          this->oldData[i] = this->buffer_[i];
+          this->data(0xff);
         }
 
         this->command(0x13); // Transfer new data
         this->start_data_();
-        for (uint32_t i = 0; i < this->get_buffer_length_(); i++)
-          this->write_byte(0x00);
+        for (uint32_t i = 0; i < this->get_buffer_length_(); i++){
+          this->write_byte(this->buffer_[i]);
+          this->oldData[i] = this->buffer_[i];
+        }
         this->end_data_();
       }
       else
