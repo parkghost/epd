@@ -10,14 +10,14 @@ class GDEY075T7 : public WaveshareEPaper {
   static const uint16_t WIDTH = 800;
 
   static const uint16_t HEIGHT = 480;
-
-  static const uint16_t IDLE_TIMEOUT = 6000;
+  
+  static const uint16_t IDLE_TIMEOUT = 10000;  
 
   void initialize() override;
 
-  void dump_config() override;
-
   void display() override;
+
+  void dump_config() override;
 
   void deep_sleep() override;
 
@@ -28,20 +28,16 @@ class GDEY075T7 : public WaveshareEPaper {
  protected:
   int get_width_internal() override;
 
-  int get_width_controller() override;
-
   int get_height_internal() override;
+
+  void init_display_();
 
   uint32_t idle_timeout_() override;
 
   bool is_busy_pin_inverted_() override { return true; }
 
-  void init_display_(RefreshMode mode);
-
   void reset_();
-
-  uint8_t oldData_[WIDTH * HEIGHT / 8];
-
+  
   uint32_t at_update_{0}, full_update_every_{30};
 
   bool initial_{false}, hibernating_{false};
